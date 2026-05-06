@@ -1,80 +1,12 @@
 [
   {
-    "name": "澎湃新闻",
-    "url": "https://rsshub.app/thepaper/featured",
-    "category": "中国新闻",
-    "note": "需 GitHub Actions（US）"
-  },
-  {
-    "name": "参考消息",
-    "url": "https://rsshub.app/cankaoxiaoxi",
-    "category": "中国新闻",
-    "note": "需 GitHub Actions（US）"
-  },
-  {
-    "name": "环球网",
-    "url": "https://rsshub.app/huanqiu/global",
-    "category": "国际新闻",
-    "note": "需 GitHub Actions（US）"
-  },
-  {
-    "name": "观察者网",
-    "url": "https://rsshub.app/guanchazhe/index",
-    "category": "国际新闻",
-    "note": "需 GitHub Actions（US）"
-  },
-  {
-    "name": "纽约时报",
-    "url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
-    "category": "国际新闻",
-    "note": "需 GitHub Actions（US）"
-  },
-  {
-    "name": "华盛顿邮报",
-    "url": "https://feeds.washingtonpost.com/rss/world",
-    "category": "国际新闻",
-    "note": "需 GitHub Actions（US）"
+    "name": "36氪",
+    "url": "https://36kr.com/feed",
+    "category": "国内新闻"
   },
   {
     "name": "BBC News",
     "url": "https://feeds.bbci.co.uk/news/rss.xml",
-    "category": "国际新闻",
-    "note": "需 GitHub Actions（US）"
-  },
-  {
-    "name": "朝日新闻",
-    "url": "https://www.asahi.com/rss/asahi/newsheadlines.rdf",
-    "category": "国际新闻",
-    "note": "不稳定"
-  },
-  {
-    "name": "NHK World",
-    "url": "https://www3.nhk.or.jp/rss/news/cat6.xml",
     "category": "国际新闻"
-  },
-  {
-    "name": "36氪",
-    "url": "https://36kr.com/feed",
-    "category": "科技商业"
-  },
-  {
-    "name": "Solidot",
-    "url": "https://www.solidot.org/index.rss",
-    "category": "科技资讯"
-  },
-  {
-    "name": "少数派",
-    "url": "https://sspai.com/feed",
-    "category": "数字生活"
-  },
-  {
-    "name": "Hacker News",
-    "url": "https://hnrss.org/frontpage",
-    "category": "技术社区"
-  },
-  {
-    "name": "GitHub Trending",
-    "url": "https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml",
-    "category": "开源动态"
   }
 ]
