@@ -1,0 +1,56 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ArticleCard from "../components/ArticleCard.astro";
+import { getCollection } from "astro:content";
+
+const articles = await getCollection("articles");
+const url = Astro.url;
+const categoryFilter = url?.searchParams?.get("category");
+const subFilter = url?.searchParams?.get("sub");
+
+let filtered = articles
+  .filter((a) => !a.id.startsWith("news/"))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+if (categoryFilter) {
+  filtered = filtered.filter((a) => {
+    const parts = a.id.split("/");
+    const cat = parts[0] || "";
+    if (subFilter) {
+      const articleSub = parts.slice(0, -1).join("/");
+      return cat === categoryFilter && articleSub === subFilter;
+    }
+    return cat === categoryFilter;
+  });
+}
+
+const title = categoryFilter
+  ? `${categoryFilter}${subFilter ? " / " + subFilter.split("/").pop() : ""}`
+  : "全部文章";
+---
+
+<BaseLayout title={`${title} - 米奇妙妙屋`}>
+  <header class="content-header">
+    <h1>{title}</h1>
+    {!categoryFilter && <p class="page-description">知识库中的所有文章</p>}
+    {categoryFilter && (
+      <p class="page-description">
+        <a href="/">返回全部文章</a>
+      </p>
+    )}
+  </header>
+
+  {
+    filtered.length === 0 ? (
+      <div class="empty-state">
+        <p>{categoryFilter ? "该分类下暂无文章" : "暂无文章"}</p>
+      </div>
+    ) : (
+      <div class="article-list">
+        {filtered.map((article) => (
+          <ArticleCard article={article} />
+        ))}
+      </div>
+    )
+  }
+</BaseLayout>

@@ -1,0 +1,37 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ArticleCard from "../../components/ArticleCard.astro";
+import { getCollection } from "astro:content";
+
+export async function getStaticPaths() {
+  const articles = await getCollection("articles");
+  const tagSet = new Set<string>();
+  for (const article of articles) {
+    for (const tag of article.data.tags || []) {
+      tagSet.add(tag);
+    }
+  }
+  return Array.from(tagSet).map((tag) => ({
+    params: { tag },
+  }));
+}
+
+const { tag } = Astro.params;
+const articles = (await getCollection("articles"))
+  .filter((a) => (a.data.tags || []).includes(tag || ""))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+---
+
+<BaseLayout title={`标签: ${tag} - 米奇妙妙屋`}>
+  <header class="content-header">
+    <h1>标签: {tag}</h1>
+    <p class="page-description">{articles.length} 篇文章</p>
+  </header>
+  {articles.length === 0 ? (
+    <div class="empty-state"><p>暂无文章</p></div>
+  ) : (
+    <div class="article-list">
+      {articles.map((article) => <ArticleCard article={article} />)}
+    </div>
+  )}
+</BaseLayout>

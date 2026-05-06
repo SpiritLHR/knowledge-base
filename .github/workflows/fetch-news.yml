@@ -1,0 +1,37 @@
+name: Fetch Daily News
+
+on:
+  schedule:
+    - cron: "7 0,10 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run fetch-news
+
+      - name: Commit and push news updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet && git diff --staged --quiet && ! git ls-files --others --exclude-standard | grep -q 'src/content/news/'; then
+            echo "No news changes, skipping."
+            exit 0
+          fi
+
+          git add src/content/news/
+          git commit -m "auto: daily news update $(date +%Y-%m-%d)"
+          git push

@@ -1,0 +1,77 @@
+---
+import { getCollection } from "astro:content";
+
+const allArticles = await getCollection("articles");
+const newsArticles = allArticles
+  .filter((a) => a.id.startsWith("news/"))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const latestNews = newsArticles.slice(0, 1);
+const base = import.meta.env.BASE_URL;
+---
+
+{
+  latestNews.length > 0 && (
+    <div class="news-ticker">
+      <h3>每日快讯</h3>
+      <div class="news-ticker-item">
+        <a href={`${base}/articles/${latestNews[0].id}`}>
+          {latestNews[0].data.title}
+        </a>
+        <span class="news-ticker-date">
+          {latestNews[0].data.date.toLocaleDateString("zh-CN", {
+            month: "short",
+            day: "numeric",
+          })}
+        </span>
+      </div>
+      <a href={`${base}/news`} class="news-ticker-more">
+        浏览全部 &rarr;
+      </a>
+    </div>
+  )
+}
+
+<style>
+  .news-ticker {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  .news-ticker h3 {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.6rem;
+  }
+  .news-ticker-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+  .news-ticker-item a {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .news-ticker-item a:hover {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .news-ticker-date {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .news-ticker-more {
+    display: block;
+    margin-top: 0.6rem;
+    font-size: 0.75rem;
+    color: var(--accent);
+  }
+</style>

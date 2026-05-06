@@ -1,0 +1,10 @@
+---
+interface Props {
+  tag: string;
+}
+
+const { tag } = Astro.props;
+const base = import.meta.env.BASE_URL;
+---
+
+<a href={`${base}/tags/${tag}`} class="tag tag-sm">{tag}</a>

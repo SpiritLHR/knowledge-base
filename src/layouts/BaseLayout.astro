@@ -1,0 +1,56 @@
+---
+import Sidebar from "../components/Sidebar.astro";
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz@8..60&display=swap"
+    />
+  </head>
+  <body>
+    <button
+      class="mobile-menu-btn"
+      id="mobileMenuBtn"
+      aria-label="Toggle sidebar"
+    >&#9776;</button>
+    <div class="layout">
+      <Sidebar />
+      <main class="main">
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>
+
+<script>
+  const btn = document.getElementById("mobileMenuBtn");
+  const sidebar = document.querySelector(".sidebar");
+  btn?.addEventListener("click", () => {
+    sidebar?.classList.toggle("open");
+  });
+  document.addEventListener("click", (e) => {
+    if (
+      sidebar?.classList.contains("open") &&
+      !sidebar.contains(e.target as Node) &&
+      e.target !== btn
+    ) {
+      sidebar.classList.remove("open");
+    }
+  });
+</script>

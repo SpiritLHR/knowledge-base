@@ -1,0 +1,47 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import Backlinks from "../components/Backlinks.astro";
+import TagBadge from "../components/TagBadge.astro";
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  article: CollectionEntry<"articles">;
+}
+
+const { article } = Astro.props;
+const { title, date, tags, description } = article.data;
+---
+
+<BaseLayout title={title} description={description}>
+  <article>
+    <header class="content-header">
+      <h1>{title}</h1>
+      <div class="article-meta">
+        <time datetime={date.toISOString()}>
+          {date.toLocaleDateString("zh-CN", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </time>
+        {
+          tags.length > 0 && (
+            <span class="tags-inline">
+              {tags.map((tag) => <TagBadge tag={tag} />)}
+            </span>
+          )
+        }
+      </div>
+    </header>
+    <div class="article-content">
+      <slot />
+    </div>
+    <footer class="article-footer">
+      <span>分类: {article.id.split("/")[0] || "未分类"}</span>
+      {tags.length > 0 && (
+        <span>标签: {tags.join(", ")}</span>
+      )}
+    </footer>
+  </article>
+  <Backlinks slug={article.id} />
+</BaseLayout>

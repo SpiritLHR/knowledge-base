@@ -1,0 +1,23 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import KnowledgeGraph from "../components/KnowledgeGraph";
+import { getCollection } from "astro:content";
+import { buildGraph } from "../utils/graph";
+
+const articles = await getCollection("articles");
+const graphData = buildGraph(articles);
+---
+
+<BaseLayout title="知识图谱 - 米奇妙妙屋">
+  <header class="content-header">
+    <h1>知识图谱</h1>
+    <p class="page-description">
+      {graphData.nodes.length} 篇文章，{graphData.edges.length} 条关联
+    </p>
+  </header>
+  <KnowledgeGraph
+    nodes={graphData.nodes}
+    edges={graphData.edges}
+    client:load
+  />
+</BaseLayout>

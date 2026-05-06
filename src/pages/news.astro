@@ -1,0 +1,89 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+const allArticles = await getCollection("articles");
+const newsArticles = allArticles
+  .filter((a) => a.id.startsWith("news/"))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const base = import.meta.env.BASE_URL;
+---
+
+<BaseLayout title="每日快讯 - 米奇妙妙屋">
+  <header class="content-header">
+    <h1>每日快讯</h1>
+    <p class="page-description">
+      {newsArticles.length > 0
+        ? `共 ${newsArticles.length} 期，自动抓取自 RSS 源`
+        : "暂无快讯，运行 npm run fetch-news 抓取最新内容"}
+    </p>
+  </header>
+
+  {
+    newsArticles.length === 0 ? (
+      <div class="empty-state">
+        <p>暂无快讯内容</p>
+        <p style="margin-top: 1rem;">
+          <code>npm run fetch-news</code>
+        </p>
+      </div>
+    ) : (
+      <div class="news-timeline">
+        {newsArticles.map((article) => (
+          <article class="news-day-card">
+            <h2>
+              <a href={`${base}/articles/${article.id}`}>
+                {article.data.title}
+              </a>
+            </h2>
+            <div class="article-meta">
+              <time datetime={article.data.date.toISOString()}>
+                {article.data.date.toLocaleDateString("zh-CN", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  weekday: "long",
+                })}
+              </time>
+            </div>
+            {article.data.description && (
+              <p class="article-description">{article.data.description}</p>
+            )}
+          </article>
+        ))}
+      </div>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .news-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .news-day-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    transition: border-color 0.15s;
+  }
+  .news-day-card:hover {
+    border-color: var(--accent);
+  }
+  .news-day-card h2 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .news-day-card h2 a {
+    color: var(--text);
+  }
+  .news-day-card h2 a:hover {
+    color: var(--accent);
+    text-decoration: none;
+  }
+</style>

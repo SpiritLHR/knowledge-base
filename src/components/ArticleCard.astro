@@ -1,0 +1,31 @@
+---
+import TagBadge from "./TagBadge.astro";
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  article: CollectionEntry<"articles">;
+}
+
+const { article } = Astro.props;
+const { title, date, tags, description } = article.data;
+const category = article.id.split("/")[0] || "";
+const base = import.meta.env.BASE_URL;
+---
+
+<article class="article-card">
+  <h2>
+    <a href={`${base}/articles/${article.id}`}>{title}</a>
+  </h2>
+  {description && <p class="article-description">{description}</p>}
+  <div class="article-meta">
+    {category && <span class="article-category">{category}</span>}
+    <time datetime={date.toISOString()}>
+      {date.toLocaleDateString("zh-CN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })}
+    </time>
+    {tags.map((tag) => <TagBadge tag={tag} />)}
+  </div>
+</article>
