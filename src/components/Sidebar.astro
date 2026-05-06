@@ -84,7 +84,7 @@ const currentPath = Astro.url?.pathname || "";
               const label = sub.split("/").pop() || sub;
               return (
                 <li>
-                  <a href={`${base}/?category=${cat}&sub=${encodeURIComponent(sub)}`}>
+                  <a href={`${base}/category/${sub}`}>
                     {label}
                   </a>
                 </li>
