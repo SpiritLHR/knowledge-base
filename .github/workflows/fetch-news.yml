@@ -1,4 +1,4 @@
-name: Fetch Daily News
+name: Fetch Daily News (RSS)
 
 on:
   schedule:
