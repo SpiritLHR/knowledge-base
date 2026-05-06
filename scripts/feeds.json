@@ -1,12 +1,12 @@
 [
   {
-    "name": "36氪",
-    "url": "https://36kr.com/feed",
+    "name": "国内聚合",
+    "url": "https://rsshub.app/zaobao/realtime/china",
     "category": "国内新闻"
   },
   {
-    "name": "BBC News",
-    "url": "https://feeds.bbci.co.uk/news/rss.xml",
+    "name": "国际聚合",
+    "url": "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en",
     "category": "国际新闻"
   }
 ]
