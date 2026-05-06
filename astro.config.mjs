@@ -3,6 +3,6 @@ import react from "@astrojs/react";
 
 export default defineConfig({
   integrations: [react()],
-  site: "https://liuhongru.github.io",
+  site: "https://spiritlhr.github.io",
   base: "/knowledge-base",
 });
