@@ -169,15 +169,22 @@ async function callDeepSeek(system: string, prompt: string): Promise<string> {
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`DeepSeek API error ${res.status}: ${err}`);
+    throw new Error(`DeepSeek API HTTP ${res.status}: ${err}`);
   }
 
   const json: any = await res.json();
+  if (json.error) {
+    throw new Error(`DeepSeek API error: ${JSON.stringify(json.error)}`);
+  }
+  if (!json.choices?.[0]?.message?.content) {
+    throw new Error(`DeepSeek 返回格式异常: ${JSON.stringify(json).slice(0, 500)}`);
+  }
   return json.choices[0].message.content;
 }
 
 // ── Write new movie file ────────────────────────────────
 function writeMovieFile(movie: CurationResult["add"][0]) {
+  fs.mkdirSync(RECOMMEND_DIR, { recursive: true });
   const slug = movie.title
     .toLowerCase()
     .replace(/[^a-z0-9一-鿿]/g, "-")
