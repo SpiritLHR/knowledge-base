@@ -188,14 +188,9 @@ async function fixPoster(filePath: string): Promise<boolean> {
   const movie = readMovie(filePath);
   if (!movie) return false;
 
-  // Skip if poster looks valid (contains a real TMDb hash)
-  if (movie.poster && /\/[a-zA-Z0-9]{20,}\.jpg/.test(movie.poster)) {
-    return false; // already has a real poster
-  }
-
-  // Use originalTitle for TMDb search if available
+  // Always re-fetch poster from TMDb — can't trust existing URLs
   const searchTitle = movie.originalTitle || movie.title;
-  console.log(`  🔍 搜索海报: ${movie.title} (${searchTitle}, ${movie.year})...`);
+  console.log(`  🔍 ${movie.title} (${searchTitle}, ${movie.year})...`);
   const posterPath = await searchTMDB(searchTitle, movie.year);
 
   if (!posterPath) {
@@ -209,7 +204,7 @@ async function fixPoster(filePath: string): Promise<boolean> {
   raw = raw.replace(/^poster:\s*.*$/m, `poster: ${newPosterUrl}`);
   raw = raw.replace(/^backdrop:\s*.*$/m, `backdrop: ${newPosterUrl.replace("/w342/", "/w1280/")}`);
   fs.writeFileSync(filePath, raw, "utf-8");
-  console.log(`    ✓ 海报已修复: ${posterPath}`);
+  console.log(`    ✓ ${posterPath}`);
   return true;
 }
 
