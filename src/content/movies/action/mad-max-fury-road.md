@@ -7,8 +7,8 @@ country: 澳大利亚 / 美国
 genre: [动作, 科幻, 冒险]
 rating: 8.7
 popularity: 86
-poster: https://image.tmdb.org/t/p/w342/kqjL17yufvn9OVLyXYpvtyrFfak.jpg
-backdrop: https://image.tmdb.org/t/p/w1280/kqjL17yufvn9OVLyXYpvtyrFfak.jpg
+poster: https://image.tmdb.org/t/p/w342/8tZYTuWezp8JvtwKkmzu8hj9tsM.jpg
+backdrop: https://image.tmdb.org/t/p/w1280/8tZYTuWezp8JvtwKkmzu8hj9tsM.jpg
 watchLinks:
   - mini4k
   - ddys

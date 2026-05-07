@@ -7,8 +7,8 @@ country: 日本
 genre: [动画, 爱情, 奇幻]
 rating: 8.5
 popularity: 90
-poster: https://image.tmdb.org/t/p/w342/xq1Ugd62d23K2knRUx6xxuALTZB.jpg
-backdrop: https://image.tmdb.org/t/p/w1280/xq1Ugd62d23K2knRUx6xxuALTZB.jpg
+poster: https://image.tmdb.org/t/p/w342/q719jXXEzOoYQDDHG6y7t2UvJbx.jpg
+backdrop: https://image.tmdb.org/t/p/w1280/q719jXXEzOoYQDDHG6y7t2UvJbx.jpg
 watchLinks:
   - mini4k
   - ddys

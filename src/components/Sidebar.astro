@@ -83,26 +83,52 @@ const currentPath = Astro.url?.pathname || "";
           标签总览
         </a>
       </li>
-      {Array.from(categories.keys()).sort().map((cat) => (
-        <li>
-          <div class="nav-dir">{cat}</div>
-          <ul class="nav-sub">
-            {Array.from(categories.get(cat)!.subdirs).sort().map((sub) => {
-              const rawLabel = sub.split("/").pop() || sub;
-              const label = nameMap[rawLabel] || rawLabel;
-              return (
-                <li>
-                  <a href={`${base}/category/${sub}`}>
-                    {label}
-                  </a>
-                </li>
-              );
-            })}
-          </ul>
-        </li>
-      ))}
+      <li class="nav-group">
+        <button
+          class="nav-group-toggle"
+          id="articlesGroupToggle"
+          aria-expanded="true"
+        >
+          <span class="nav-group-label">全部文章</span>
+          <span class="nav-group-arrow"></span>
+        </button>
+        <ul class="nav-group-list" id="articlesGroupList">
+          {Array.from(categories.keys()).sort().map((cat) => (
+            <li>
+              <div class="nav-dir">
+                <a href={`${base}/category/${cat}`} class:list={[currentPath === `${base}/category/${cat}` ? "active" : ""]}>
+                  {cat}
+                </a>
+              </div>
+              <ul class="nav-sub">
+                {Array.from(categories.get(cat)!.subdirs).sort().map((sub) => {
+                  const rawLabel = sub.split("/").pop() || sub;
+                  const label = nameMap[rawLabel] || rawLabel;
+                  return (
+                    <li>
+                      <a href={`${base}/category/${sub}`}>
+                        {label}
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </li>
     </ul>
   </nav>
+
+  <script>
+    const articlesToggle = document.getElementById("articlesGroupToggle");
+    const articlesList = document.getElementById("articlesGroupList");
+    articlesToggle?.addEventListener("click", () => {
+      const expanded = articlesToggle.getAttribute("aria-expanded") === "true";
+      articlesToggle.setAttribute("aria-expanded", String(!expanded));
+      articlesList?.classList.toggle("collapsed", expanded);
+    });
+  </script>
 
   <button class="theme-toggle" id="themeToggle" title="切换深色模式">
     <span class="theme-toggle-icon"></span>

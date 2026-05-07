@@ -255,6 +255,70 @@ img {
   margin-bottom: 0.25rem;
 }
 
+.sidebar-nav .nav-dir a {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.875rem;
+}
+
+.sidebar-nav .nav-dir a:hover {
+  color: var(--accent);
+}
+
+.nav-group { margin-top: 0.75rem; }
+
+.nav-group-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  font-family: var(--font-sans);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  transition: color 0.15s;
+}
+
+.nav-group-toggle:hover { color: var(--text); }
+
+.nav-group-label { font-weight: 500; }
+
+.nav-group-arrow {
+  width: 16px;
+  height: 16px;
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.nav-group-arrow::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  width: 5px;
+  height: 5px;
+  border-right: 1.5px solid var(--text-muted);
+  border-bottom: 1.5px solid var(--text-muted);
+}
+
+.nav-group-toggle[aria-expanded="false"] .nav-group-arrow {
+  transform: rotate(-90deg);
+}
+
+.nav-group-list {
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  max-height: 600px;
+}
+
+.nav-group-list.collapsed {
+  max-height: 0;
+}
+
 .sidebar-nav .nav-sub {
   padding-left: 0.75rem;
   border-left: 1px solid var(--border);
