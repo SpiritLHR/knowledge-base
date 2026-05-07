@@ -31,11 +31,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          if git diff --quiet && git diff --staged --quiet && ! git ls-files --others --exclude-standard | grep -q 'src/content/movies/recommend/'; then
+          if git diff --quiet && git diff --staged --quiet && ! git ls-files --others --exclude-standard | grep -q 'src/content/movies/'; then
             echo "No curation changes, skipping."
             exit 0
           fi
 
-          git add src/content/movies/recommend/
+          git add src/content/movies/
           git commit -m "auto: weekly movie curation $(date +%Y-%m-%d)"
           git push
