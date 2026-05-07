@@ -219,17 +219,30 @@ async function fixPoster(filePath: string): Promise<boolean> {
   return false;
 }
 
-// ── Fix all posters ──────────────────────────────────────
+// ── Collect all movie .md files across entire library ─────
+function collectAllMovieFiles(): string[] {
+  const result: string[] = [];
+  function walk(dir: string) {
+    if (!fs.existsSync(dir)) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) { walk(full); }
+      else if (entry.name.endsWith(".md")) { result.push(full); }
+    }
+  }
+  walk(MOVIES_DIR);
+  return result;
+}
+
+// ── Fix all posters across entire library ─────────────────
 async function fixAllPosters() {
   if (!TMDB_KEY) { console.log("(无 TMDB_API_KEY，跳過海報修復)\n"); return; }
 
-  console.log("修复海报...");
-  const files = fs.existsSync(RECOMMEND_DIR)
-    ? fs.readdirSync(RECOMMEND_DIR).filter(f => f.endsWith(".md"))
-    : [];
+  console.log("修复海报（全库扫描）...");
+  const files = collectAllMovieFiles();
   let fixed = 0;
   for (const f of files) {
-    const changed = await fixPoster(path.join(RECOMMEND_DIR, f));
+    const changed = await fixPoster(f);
     if (changed) fixed++;
   }
   if (fixed === 0) console.log("  所有海报正常");
