@@ -12,7 +12,7 @@ const category = article.id.split("/")[0] || "";
 const base = import.meta.env.BASE_URL;
 ---
 
-<article class="article-card">
+<article class={`article-card cat-${category}`}>
   <h2>
     <a href={`${base}/articles/${article.id}`}>{title}</a>
   </h2>

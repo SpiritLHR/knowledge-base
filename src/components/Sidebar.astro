@@ -110,4 +110,22 @@ const currentPath = Astro.url?.pathname || "";
       })}
     </div>
   </div>
+
+  <button class="theme-toggle" id="themeToggle" title="切换深色模式">
+    <span class="theme-toggle-icon"></span>
+  </button>
 </aside>
+
+<script>
+  const toggle = document.getElementById("themeToggle");
+  const html = document.documentElement;
+  const saved = localStorage.getItem("theme");
+  if (saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+    html.setAttribute("data-theme", "dark");
+  }
+  toggle?.addEventListener("click", () => {
+    const isDark = html.getAttribute("data-theme") === "dark";
+    html.setAttribute("data-theme", isDark ? "light" : "dark");
+    localStorage.setItem("theme", isDark ? "light" : "dark");
+  });
+</script>

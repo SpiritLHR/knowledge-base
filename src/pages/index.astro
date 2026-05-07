@@ -3,12 +3,45 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import ArticleCard from "../components/ArticleCard.astro";
 import { getCollection } from "astro:content";
 
-const articles = (await getCollection("articles"))
+const allArticles = await getCollection("articles");
+const articles = allArticles
   .filter((a) => !a.id.startsWith("news/"))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const catSet = new Set<string>();
+const tagSet = new Set<string>();
+for (const a of articles) {
+  catSet.add(a.id.split("/")[0]);
+  for (const t of a.data.tags || []) tagSet.add(t);
+}
+
+const hour = new Date().getHours();
+const greeting = hour < 6 ? "夜深了" : hour < 12 ? "早上好" : hour < 18 ? "下午好" : "晚上好";
 ---
 
-<BaseLayout title="全部文章 - 米奇妙妙屋">
+<BaseLayout title="米奇妙妙屋">
+  <section class="hero">
+    <h1 class="hero-greeting">{greeting}，刘鸿儒</h1>
+    <p class="hero-subtitle">
+      欢迎回到你的知识库。这里记录着你学过的技术、读过的书、做过的项目，
+      每一个想法都值得留存。
+    </p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-value">{articles.length}</span>
+        <span class="hero-stat-label">篇文章</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-value">{catSet.size}</span>
+        <span class="hero-stat-label">个分类</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-value">{tagSet.size}</span>
+        <span class="hero-stat-label">个标签</span>
+      </div>
+    </div>
+  </section>
+
   <header class="content-header">
     <h1>全部文章</h1>
     <p class="page-description">知识库中的所有文章</p>
