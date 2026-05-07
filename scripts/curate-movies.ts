@@ -99,25 +99,36 @@ function getLibrary(): MovieMeta[] {
 // ── TMDb API ────────────────────────────────────────────
 async function searchTMDB(title: string, year: number): Promise<string | null> {
   if (!TMDB_KEY) return null;
-  try {
-    const q = encodeURIComponent(`${title} ${year}`);
-    const url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${q}&year=${year}&language=zh-CN`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const json: any = await res.json();
-    if (json.results?.length > 0) {
-      const poster = json.results[0].poster_path;
-      if (poster) return poster;
-      // Fallback: try without year filter
-      if (json.results.length === 0) return null;
-      for (const r of json.results) {
-        if (r.poster_path) return r.poster_path;
+
+  // Normalize: strip year if embedded in title (e.g. "Movie (2020)")
+  const cleanTitle = title.replace(/\s*\(\d{4}\)\s*$/, "").trim();
+
+  const queries = [
+    `${cleanTitle}`,           // just the title
+    `${cleanTitle} ${year}`,   // title + year
+  ];
+
+  for (const query of queries) {
+    try {
+      const q = encodeURIComponent(query);
+      // Try with year filter first, then without
+      for (const yearFilter of [year, 0]) {
+        const yearParam = yearFilter > 0 ? `&year=${yearFilter}` : "";
+        const url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${q}${yearParam}&language=zh-CN`;
+        const res = await fetch(url);
+        if (!res.ok) continue;
+        const json: any = await res.json();
+        if (json.results?.length > 0) {
+          for (const r of json.results) {
+            if (r.poster_path) return r.poster_path;
+          }
+        }
       }
+    } catch {
+      continue;
     }
-    return null;
-  } catch {
-    return null;
   }
+  return null;
 }
 
 // ── DeepSeek API ────────────────────────────────────────
@@ -188,24 +199,24 @@ async function fixPoster(filePath: string): Promise<boolean> {
   const movie = readMovie(filePath);
   if (!movie) return false;
 
-  // Always re-fetch poster from TMDb — can't trust existing URLs
-  const searchTitle = movie.originalTitle || movie.title;
-  console.log(`  🔍 ${movie.title} (${searchTitle}, ${movie.year})...`);
-  const posterPath = await searchTMDB(searchTitle, movie.year);
+  // Try original title first, then Chinese title as fallback
+  const searchTitles = [movie.originalTitle, movie.title].filter(Boolean);
+  console.log(`  🔍 ${movie.title}...`);
 
-  if (!posterPath) {
-    console.log(`    ✗ 未找到海报`);
-    return false;
+  for (const t of searchTitles) {
+    const posterPath = await searchTMDB(t, movie.year);
+    if (posterPath) {
+      let raw = fs.readFileSync(filePath, "utf-8");
+      const newPosterUrl = `https://image.tmdb.org/t/p/w342${posterPath}`;
+      raw = raw.replace(/^poster:\s*.*$/m, `poster: ${newPosterUrl}`);
+      raw = raw.replace(/^backdrop:\s*.*$/m, `backdrop: ${newPosterUrl.replace("/w342/", "/w1280/")}`);
+      fs.writeFileSync(filePath, raw, "utf-8");
+      console.log(`    ✓ ${posterPath}`);
+      return true;
+    }
   }
-
-  // Read file, replace poster line
-  let raw = fs.readFileSync(filePath, "utf-8");
-  const newPosterUrl = `https://image.tmdb.org/t/p/w342${posterPath}`;
-  raw = raw.replace(/^poster:\s*.*$/m, `poster: ${newPosterUrl}`);
-  raw = raw.replace(/^backdrop:\s*.*$/m, `backdrop: ${newPosterUrl.replace("/w342/", "/w1280/")}`);
-  fs.writeFileSync(filePath, raw, "utf-8");
-  console.log(`    ✓ ${posterPath}`);
-  return true;
+  console.log(`    ✗ 未找到海报`);
+  return false;
 }
 
 // ── Fix all posters ──────────────────────────────────────
