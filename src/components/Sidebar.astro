@@ -5,7 +5,6 @@ import { getCollection } from "astro:content";
 
 const articles = await getCollection("articles");
 
-const tagCount = new Map<string, number>();
 const categories = new Map<string, { count: number; subdirs: Set<string> }>();
 
 for (const article of articles) {
@@ -20,9 +19,6 @@ for (const article of articles) {
   cat.count++;
   if (sub && sub !== category) cat.subdirs.add(sub);
 
-  for (const tag of article.data.tags || []) {
-    tagCount.set(tag, (tagCount.get(tag) || 0) + 1);
-  }
 }
 
 const searchItems = articles.map((a) => ({
@@ -41,8 +37,6 @@ const nameMap: Record<string, string> = {
   thoughts: "日常随想",
 };
 
-const sortedTags = Array.from(tagCount.entries()).sort((a, b) => b[1] - a[1]);
-const maxTagCount = Math.max(...sortedTags.map(([, c]) => c), 1);
 const base = import.meta.env.BASE_URL;
 const currentPath = Astro.url?.pathname || "";
 ---
@@ -80,6 +74,11 @@ const currentPath = Astro.url?.pathname || "";
         </a>
       </li>
       <li>
+        <a href={`${base}/movies`} class:list={[currentPath === `${base}/movies` || currentPath.startsWith(`${base}/movies/`) ? "active" : ""]}>
+          电影推荐
+        </a>
+      </li>
+      <li>
         <a href={`${base}/tags`} class:list={[currentPath === `${base}/tags` ? "active" : ""]}>
           标签总览
         </a>
@@ -104,21 +103,6 @@ const currentPath = Astro.url?.pathname || "";
       ))}
     </ul>
   </nav>
-
-  <div class="sidebar-tags">
-    <h3>标签</h3>
-    <div class="tag-cloud">
-      {sortedTags.slice(0, 30).map(([tag, count]) => {
-        const ratio = count / maxTagCount;
-        const sizeClass = ratio > 0.7 ? "tag-xl" : ratio > 0.4 ? "tag-lg" : ratio > 0.2 ? "tag-md" : "tag-sm";
-        return (
-          <a href={`${base}/tags/${tag}`} class={`tag ${sizeClass}`}>
-            {tag}
-          </a>
-        );
-      })}
-    </div>
-  </div>
 
   <button class="theme-toggle" id="themeToggle" title="切换深色模式">
     <span class="theme-toggle-icon"></span>
