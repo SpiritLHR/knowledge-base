@@ -7,8 +7,8 @@ country: 美国
 genre: [科幻, 动作]
 rating: 9.1
 popularity: 95
-poster: https://image.tmdb.org/t/p/w342/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg
-backdrop: https://image.tmdb.org/t/p/w1280/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg
+poster: https://image.tmdb.org/t/p/w342/vsTC6jddyfy25GirpCVtZ7GOB7A.jpg
+backdrop: https://image.tmdb.org/t/p/w1280/vsTC6jddyfy25GirpCVtZ7GOB7A.jpg
 watchLinks:
   - mini4k
   - ddys

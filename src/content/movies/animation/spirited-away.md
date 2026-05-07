@@ -7,8 +7,8 @@ country: 日本
 genre: [动画, 奇幻, 冒险]
 rating: 9.4
 popularity: 96
-poster: https://image.tmdb.org/t/p/w342/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg
-backdrop: https://image.tmdb.org/t/p/w1280/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg
+poster: https://image.tmdb.org/t/p/w342/9oZmkkNlI4Ktx6NTkdpeU525qSc.jpg
+backdrop: https://image.tmdb.org/t/p/w1280/9oZmkkNlI4Ktx6NTkdpeU525qSc.jpg
 watchLinks:
   - mini4k
   - ddys

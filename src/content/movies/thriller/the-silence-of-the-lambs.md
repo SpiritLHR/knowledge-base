@@ -7,8 +7,8 @@ country: 美国
 genre: [悬疑, 犯罪, 惊悚]
 rating: 8.9
 popularity: 88
-poster: https://image.tmdb.org/t/p/w342/uS9m8OBk1VVGrUUkIXeQ6iZEN8p.jpg
-backdrop: https://image.tmdb.org/t/p/w1280/uS9m8OBk1VVGrUUkIXeQ6iZEN8p.jpg
+poster: https://image.tmdb.org/t/p/w342/guKREBLV4nSzT52rKAjHFjSjhsL.jpg
+backdrop: https://image.tmdb.org/t/p/w1280/guKREBLV4nSzT52rKAjHFjSjhsL.jpg
 watchLinks:
   - mini4k
   - ddys

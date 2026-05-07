@@ -7,8 +7,8 @@ country: 韩国
 genre: [剧情, 悬疑]
 rating: 9.0
 popularity: 92
-poster: https://image.tmdb.org/t/p/w342/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg
-backdrop: https://image.tmdb.org/t/p/w1280/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg
+poster: https://image.tmdb.org/t/p/w342/nwTQE4vWe6NoFSEgxGu4hO9J4Tv.jpg
+backdrop: https://image.tmdb.org/t/p/w1280/nwTQE4vWe6NoFSEgxGu4hO9J4Tv.jpg
 watchLinks:
   - mini4k
   - ddys

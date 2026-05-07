@@ -7,8 +7,8 @@ country: 美国 / 英国
 genre: [科幻, 剧情, 冒险]
 rating: 9.4
 popularity: 98
-poster: https://image.tmdb.org/t/p/w342/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg
-backdrop: https://image.tmdb.org/t/p/w1280/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg
+poster: https://image.tmdb.org/t/p/w342/c35Vwd9rmMQfaEJuUrJRF3LZWJX.jpg
+backdrop: https://image.tmdb.org/t/p/w1280/c35Vwd9rmMQfaEJuUrJRF3LZWJX.jpg
 watchLinks:
   - mini4k
   - ddys
