@@ -15,8 +15,15 @@ for (const a of articles) {
   for (const t of a.data.tags || []) tagSet.add(t);
 }
 
+const PER_PAGE = 3;
+const totalSlides = Math.ceil(articles.length / PER_PAGE);
+const slides = Array.from({ length: totalSlides }, (_, i) =>
+  articles.slice(i * PER_PAGE, (i + 1) * PER_PAGE)
+);
+
 const hour = new Date().getHours();
 const greeting = hour < 6 ? "夜深了" : hour < 12 ? "早上好" : hour < 18 ? "下午好" : "晚上好";
+const base = import.meta.env.BASE_URL;
 ---
 
 <BaseLayout title="米奇妙妙屋">
@@ -42,20 +49,91 @@ const greeting = hour < 6 ? "夜深了" : hour < 12 ? "早上好" : hour < 18 ? 
     </div>
   </section>
 
-  <header class="content-header">
-    <h1>全部文章</h1>
-    <p class="page-description">知识库中的所有文章</p>
-  </header>
-
   {
     articles.length === 0 ? (
       <div class="empty-state"><p>暂无文章</p></div>
     ) : (
-      <div class="article-list">
-        {articles.map((article) => (
-          <ArticleCard article={article} />
-        ))}
-      </div>
+      <section class="carousel-section">
+        <div class="carousel-header">
+          <div>
+            <h2 class="carousel-title">精选文章</h2>
+            <p class="carousel-subtitle">滑动切换，发现更多</p>
+          </div>
+          <a href={`${base}/`} class="carousel-view-all">浏览全部 &rarr;</a>
+        </div>
+
+        <div class="carousel" id="carousel" data-total={totalSlides}>
+          <div class="carousel-track" id="carouselTrack">
+            {slides.map((slide, si) => (
+              <div
+                class="carousel-slide"
+                data-index={si}
+                class:list={["carousel-slide", { active: si === 0 }]}
+              >
+                {slide.map((article) => (
+                  <ArticleCard article={article} />
+                ))}
+              </div>
+            ))}
+          </div>
+
+          <button class="carousel-arrow carousel-prev" id="carouselPrev" aria-label="上一组">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button class="carousel-arrow carousel-next" id="carouselNext" aria-label="下一组">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+
+        <div class="carousel-dots" id="carouselDots">
+          {slides.map((_, i) => (
+            <button
+              class="carousel-dot"
+              class:list={["carousel-dot", { active: i === 0 }]}
+              data-index={i}
+              aria-label={`第 ${i + 1} 组`}
+            ></button>
+          ))}
+        </div>
+      </section>
     )
   }
 </BaseLayout>
+
+<script>
+  let current = 0;
+  const carousel = document.getElementById("carousel")!;
+  const total = Number(carousel.dataset.total) || 1;
+  const track = document.getElementById("carouselTrack")!;
+  const dots = document.querySelectorAll<HTMLButtonElement>(".carousel-dot");
+  const slides = document.querySelectorAll<HTMLElement>(".carousel-slide");
+
+  function goTo(index: number) {
+    current = ((index % total) + total) % total;
+    track.style.transform = `translateX(-${current * 100}%)`;
+    slides.forEach((s, i) => s.classList.toggle("active", i === current));
+    dots.forEach((d, i) => d.classList.toggle("active", i === current));
+  }
+
+  document.getElementById("carouselPrev")?.addEventListener("click", () => goTo(current - 1));
+  document.getElementById("carouselNext")?.addEventListener("click", () => goTo(current + 1));
+  dots.forEach((dot) => {
+    dot.addEventListener("click", () => goTo(Number(dot.dataset.index)));
+  });
+
+  let autoTimer = setInterval(() => goTo(current + 1), 5000);
+
+  carousel.addEventListener("mouseenter", () => clearInterval(autoTimer));
+  carousel.addEventListener("mouseleave", () => {
+    autoTimer = setInterval(() => goTo(current + 1), 5000);
+  });
+
+  let touchStartX = 0;
+  carousel.addEventListener("touchstart", (e) => {
+    touchStartX = (e as TouchEvent).touches[0].clientX;
+  });
+  carousel.addEventListener("touchend", (e) => {
+    const diff = touchStartX - (e as TouchEvent).changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) goTo(current + (diff > 0 ? 1 : -1));
+  });
+</script>
