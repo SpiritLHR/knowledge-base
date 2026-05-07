@@ -4,8 +4,8 @@ import path from "path";
 
 const CONTENT_DIR = path.resolve("src/content/news");
 const FEEDS_FILE = path.resolve("scripts/feeds.json");
-const MAX_PER_FEED = 8;
-const DAYS_BACK = 1;
+const MAX_PER_FEED = 20;
+const DAYS_BACK = 2;
 const TODAY = new Date();
 const DATE_STR = TODAY.toISOString().slice(0, 10);
 
