@@ -1,0 +1,368 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+import { marked } from "marked";
+import { buildWatchUrls } from "../../utils/watch-sites";
+
+export async function getStaticPaths() {
+  const movies = await getCollection("movies");
+  return movies.map((m) => ({
+    params: { slug: m.id },
+    props: { movie: m },
+  }));
+}
+
+const { movie } = Astro.props;
+const slug = Array.isArray(Astro.params.slug) ? Astro.params.slug.join("/") : Astro.params.slug;
+const { title, originalTitle, year, director, country, genre, rating, popularity, poster, backdrop, watchLinks, review } = movie.data;
+
+const watchSites: string[] = watchLinks || [];
+const watchUrls = buildWatchUrls(title, watchSites);
+
+const body = await marked.parse(movie.body || "");
+
+const base = import.meta.env.BASE_URL;
+const displayBackdrop = backdrop || poster;
+---
+
+<BaseLayout title={`${title} - 电影推荐`} description={review}>
+  <article class="movie-detail">
+    <!-- Backdrop Banner -->
+    <div
+      class="movie-detail-backdrop"
+      style={`--backdrop: url(${displayBackdrop})`}
+    >
+      <div class="movie-detail-backdrop-overlay"></div>
+      <a href={`${base}/movies`} class="movie-detail-back">&larr; 返回推荐</a>
+    </div>
+
+    <!-- Info Section -->
+    <div class="movie-detail-main">
+      <div class="movie-detail-poster">
+        <img src={poster} alt={title} onerror="this.style.display='none'" />
+        {rating && (
+          <div class="movie-detail-rating-badge">
+            <span class="movie-detail-rating-score">{rating.toFixed(1)}</span>
+            <span class="movie-detail-rating-label">评分</span>
+          </div>
+        )}
+        {popularity && (
+          <div class="movie-detail-popularity">
+            热度 {popularity}
+          </div>
+        )}
+      </div>
+
+      <div class="movie-detail-info">
+        <h1 class="movie-detail-title">{title}</h1>
+        {originalTitle && (
+          <p class="movie-detail-original">{originalTitle}</p>
+        )}
+
+        <div class="movie-detail-meta-grid">
+          <div class="movie-detail-meta-item">
+            <span class="movie-detail-meta-label">导演</span>
+            <span>{director}</span>
+          </div>
+          <div class="movie-detail-meta-item">
+            <span class="movie-detail-meta-label">年份</span>
+            <span>{year}</span>
+          </div>
+          {country && (
+            <div class="movie-detail-meta-item">
+              <span class="movie-detail-meta-label">国家</span>
+              <span>{country}</span>
+            </div>
+          )}
+          <div class="movie-detail-meta-item">
+            <span class="movie-detail-meta-label">类型</span>
+            <span>{genre.join(" / ")}</span>
+          </div>
+        </div>
+
+        <!-- Watch Buttons -->
+        {watchUrls.length > 0 && (
+          <div class="movie-detail-watch">
+            <h3>观看渠道</h3>
+            <div class="movie-detail-watch-links">
+              {watchUrls.map((link) => (
+                <a
+                  href={link!.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="movie-detail-watch-btn"
+                >
+                  {link!.name}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+
+    <!-- Review Content -->
+    {movie.body && (
+      <div class="movie-detail-review">
+        <h2>推荐理由</h2>
+        <div class="article-content" set:html={body} />
+      </div>
+    )}
+  </article>
+</BaseLayout>
+
+<style is:global>
+  .movie-detail {
+    margin: -2rem -3rem;
+  }
+
+  /* Backdrop */
+  .movie-detail-backdrop {
+    position: relative;
+    height: 380px;
+    background-image: var(--backdrop);
+    background-size: cover;
+    background-position: center 25%;
+  }
+
+  .movie-detail-backdrop-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.3) 0%,
+      rgba(0,0,0,0.1) 40%,
+      var(--bg) 100%
+    );
+  }
+
+  .movie-detail-back {
+    position: absolute;
+    top: 1.25rem;
+    left: 1.5rem;
+    z-index: 2;
+    color: #fff;
+    font-size: 0.85rem;
+    text-decoration: none;
+    padding: 0.4rem 0.9rem;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    transition: background 0.2s;
+  }
+
+  .movie-detail-back:hover {
+    background: rgba(0, 0, 0, 0.6);
+    text-decoration: none;
+  }
+
+  /* Main Info */
+  .movie-detail-main {
+    display: flex;
+    gap: 2rem;
+    padding: 0 3rem;
+    margin-top: -120px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .movie-detail-poster {
+    flex-shrink: 0;
+    width: 240px;
+    aspect-ratio: 2/3;
+    position: relative;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #1a1b1e 0%, #25262b 50%, #1a1b1e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  }
+
+  .movie-detail-poster::before {
+    content: "🎬";
+    font-size: 3rem;
+    position: absolute;
+    opacity: 0.3;
+    z-index: 0;
+  }
+
+  .movie-detail-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .movie-detail-rating-badge {
+    position: absolute;
+    top: -0.5rem;
+    right: -0.5rem;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.5);
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  .movie-detail-rating-score {
+    font-size: 1.1rem;
+  }
+
+  .movie-detail-rating-label {
+    font-size: 0.55rem;
+    opacity: 0.85;
+  }
+
+  .movie-detail-popularity {
+    margin-top: 0.6rem;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+  }
+
+  /* Info */
+  .movie-detail-info {
+    padding-top: 120px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .movie-detail-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+  }
+
+  .movie-detail-original {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
+  }
+
+  .movie-detail-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .movie-detail-meta-item {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .movie-detail-meta-label {
+    color: var(--text-muted);
+    min-width: 2.5rem;
+    flex-shrink: 0;
+  }
+
+  /* Watch */
+  .movie-detail-watch {
+    padding: 1.25rem;
+    border-radius: 12px;
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+  }
+
+  .movie-detail-watch h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text);
+  }
+
+  .movie-detail-watch-links {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .movie-detail-watch-btn {
+    display: inline-block;
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .movie-detail-watch-btn:hover {
+    background: #f59e0b;
+    transform: translateY(-1px);
+    text-decoration: none;
+  }
+
+  /* Review */
+  .movie-detail-review {
+    padding: 2.5rem 3rem 1rem;
+  }
+
+  .movie-detail-review h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent);
+    display: inline-block;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .movie-detail {
+      margin: -1rem -1rem;
+    }
+
+    .movie-detail-backdrop {
+      height: 240px;
+    }
+
+    .movie-detail-main {
+      flex-direction: column;
+      align-items: center;
+      padding: 0 1rem;
+      margin-top: -80px;
+    }
+
+    .movie-detail-poster {
+      width: 180px;
+    }
+
+    .movie-detail-info {
+      padding-top: 0;
+      text-align: center;
+    }
+
+    .movie-detail-title {
+      font-size: 1.6rem;
+    }
+
+    .movie-detail-meta-grid {
+      grid-template-columns: 1fr;
+      text-align: left;
+    }
+
+    .movie-detail-review {
+      padding: 2rem 1rem 1rem;
+    }
+  }
+</style>
