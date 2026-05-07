@@ -16,6 +16,7 @@
   --radius: 8px;
   --max-width: 720px;
   --sidebar-width: 280px;
+  --toc-width: 200px;
   --font-sans: "Inter", "PingFang SC", "Microsoft YaHei", "Noto Sans SC",
     system-ui, -apple-system, sans-serif;
   --font-serif: "Source Serif 4", "Noto Serif SC", "STSong", Georgia, serif;
@@ -245,6 +246,27 @@ img {
 .sidebar-nav a.active {
   color: var(--accent);
   font-weight: 500;
+}
+
+.collection-count {
+  display: inline-block;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 1.2em;
+  height: 1.2em;
+  line-height: 1.2em;
+  text-align: center;
+  border-radius: 999px;
+  padding: 0 0.35em;
+  vertical-align: middle;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.collection-count:empty,
+.collection-count:contains("0") {
+  display: none;
 }
 
 .sidebar-nav .nav-dir {
@@ -564,6 +586,113 @@ img {
   border: none;
   border-top: 1px solid var(--border);
   margin: 2rem 0;
+}
+
+/* Article wrapper */
+.article-wrapper {
+  position: relative;
+}
+
+/* Desktop ToC — fixed on the right, only on wide screens */
+.toc-sidebar {
+  display: none;
+}
+
+@media (min-width: 1200px) {
+  .toc-sidebar {
+    display: block;
+    position: fixed;
+    left: calc(var(--sidebar-width) + var(--max-width) + 1.5rem);
+    top: 2rem;
+    width: var(--toc-width);
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+  }
+}
+
+.toc ul {
+  list-style: none;
+  padding: 0;
+}
+
+.toc-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.toc-item {
+  margin-bottom: 0.3rem;
+  line-height: 1.4;
+}
+
+.toc-item a {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  display: block;
+  padding: 0.15rem 0 0.15rem 0.6rem;
+  border-left: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.toc-item a:hover,
+.toc-item a.toc-active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  text-decoration: none;
+}
+
+.toc-depth-3 a {
+  padding-left: 1.5rem;
+  font-size: 0.75rem;
+}
+
+/* Mobile ToC — collapsible details at article top */
+.toc-mobile {
+  display: none;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+@media (max-width: 1199px) {
+  .toc-mobile {
+    display: block;
+  }
+}
+
+.toc-mobile summary {
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+.toc-mobile-nav {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+/* Shiki pre/code overrides */
+.article-content pre:has(code.shiki) {
+  padding: 1rem 1.25rem;
+}
+
+.article-content pre code {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+
+.shiki .line {
+  display: block;
 }
 
 a.wikilink {

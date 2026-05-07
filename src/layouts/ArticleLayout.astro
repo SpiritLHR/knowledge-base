@@ -4,11 +4,18 @@ import Backlinks from "../components/Backlinks.astro";
 import TagBadge from "../components/TagBadge.astro";
 import type { CollectionEntry } from "astro:content";
 
-interface Props {
-  article: CollectionEntry<"articles">;
+interface Heading {
+  depth: number;
+  text: string;
+  slug: string;
 }
 
-const { article } = Astro.props;
+interface Props {
+  article: CollectionEntry<"articles">;
+  headings?: Heading[];
+}
+
+const { article, headings = [] } = Astro.props;
 const { title, date, tags, description } = article.data;
 ---
 
@@ -33,15 +40,73 @@ const { title, date, tags, description } = article.data;
         }
       </div>
     </header>
-    <div class="article-content">
-      <slot />
+
+    {
+      headings.length > 0 && (
+        <details class="toc-mobile" open>
+          <summary>目录</summary>
+          <nav class="toc toc-mobile-nav">
+            <ul>
+              {headings.map((h) => (
+                <li class={`toc-item toc-depth-${h.depth}`}>
+                  <a href={`#${h.slug}`}>{h.text}</a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </details>
+      )
+    }
+
+    <div class="article-wrapper">
+      <div class="article-content">
+        <slot />
+      </div>
+      {
+        headings.length > 0 && (
+          <aside class="toc-sidebar">
+            <nav class="toc">
+              <h3 class="toc-title">目录</h3>
+              <ul>
+                {headings.map((h) => (
+                  <li class={`toc-item toc-depth-${h.depth}`}>
+                    <a href={`#${h.slug}`}>{h.text}</a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </aside>
+        )
+      }
     </div>
+
     <footer class="article-footer">
       <span>分类: {article.id.split("/")[0] || "未分类"}</span>
-      {tags.length > 0 && (
-        <span>标签: {tags.join(", ")}</span>
-      )}
+      {tags.length > 0 && <span>标签: {tags.join(", ")}</span>}
     </footer>
   </article>
   <Backlinks slug={article.id} />
 </BaseLayout>
+
+<script>
+  const tocLinks = document.querySelectorAll(".toc a");
+  if (tocLinks.length > 0) {
+    const articleHeadings = document.querySelectorAll(
+      ".article-content h2[id], .article-content h3[id]",
+    );
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const id = entry.target.id;
+          const link = document.querySelector(`.toc a[href="#${CSS.escape(id)}"]`);
+          if (entry.isIntersecting) {
+            tocLinks.forEach((l) => l.classList.remove("toc-active"));
+            link?.classList.add("toc-active");
+          }
+        });
+      },
+      { rootMargin: "-80px 0px -80% 0px" },
+    );
+    articleHeadings.forEach((h) => observer.observe(h));
+  }
+</script>

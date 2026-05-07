@@ -4,7 +4,15 @@ import { getCollection } from "astro:content";
 import { buildWatchUrls } from "../utils/watch-sites";
 
 const allMovies = await getCollection("movies");
-const movies = allMovies.sort((a, b) => b.data.popularity! - a.data.popularity!);
+
+// Separate recommendations (recommend/ dir) from curated collection
+const recommendMovies = allMovies
+  .filter((m) => m.id.startsWith("recommend/"))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const movies = allMovies
+  .filter((m) => !m.id.startsWith("recommend/"))
+  .sort((a, b) => b.data.popularity! - a.data.popularity!);
 
 const allGenres = [...new Set(movies.flatMap((m) => m.data.genre))].sort();
 const avgRating = (movies.reduce((s, m) => s + (m.data.rating || 0), 0) / movies.length).toFixed(1);
@@ -56,6 +64,47 @@ const base = import.meta.env.BASE_URL;
     </div>
   </div>
 
+  <!-- Recommendation Strip -->
+  {recommendMovies.length > 0 && (
+    <section class="recommend-section" id="recommendSection">
+      <div class="recommend-header">
+        <h2 class="recommend-title">本周推荐</h2>
+        <span class="recommend-badge">Claude 精选</span>
+        <button class="manage-recommend-btn" id="manageRecommendBtn" title="管理推荐">管理</button>
+      </div>
+      <div class="recommend-strip" id="recommendStrip">
+        {recommendMovies.map((movie) => (
+          <div class="recommend-card" data-movie-id={movie.id}>
+            <a href={`${base}/movies/${movie.id}`} class="recommend-poster">
+              <img src={movie.data.poster} alt={movie.data.title} loading="eager" onerror="this.style.display='none'" />
+            </a>
+            <div class="recommend-info">
+              <a href={`${base}/movies/${movie.id}`} class="recommend-name">{movie.data.title}</a>
+              <span class="recommend-year">{movie.data.year} · {movie.data.director}</span>
+            </div>
+            <button
+              class="collect-btn"
+              data-movie={JSON.stringify({
+                id: movie.id,
+                title: movie.data.title,
+                poster: movie.data.poster,
+                year: movie.data.year,
+                director: movie.data.director,
+                genre: movie.data.genre,
+                rating: movie.data.rating || 0,
+              })}
+              aria-label="收藏"
+            >
+              <svg class="collect-heart" viewBox="0 0 24 24" width="18" height="18">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
+
   <!-- Filters -->
   <div class="movies-filters">
     <!-- Genre Filter -->
@@ -99,6 +148,15 @@ const base = import.meta.env.BASE_URL;
     </div>
   </div>
 
+  <!-- Collection Mode Banner -->
+  <div class="collection-banner" id="collectionBanner" style="display:none">
+    <span>📂 我的收藏 (<strong id="collectionBannerCount">0</strong> 部)</span>
+    <button class="collection-mode-exit" id="collectionModeExit">← 返回全部电影</button>
+  </div>
+
+  <!-- Collection Grid (shown only in collection mode, populated by JS) -->
+  <div class="movie-grid" id="collectionGrid" style="display:none"></div>
+
   <!-- Movie Grid -->
   <div class="movie-grid" id="movieGrid">
     {movies.map((movie, i) => (
@@ -121,6 +179,24 @@ const base = import.meta.env.BASE_URL;
               {movie.data.rating ? movie.data.rating.toFixed(1) : "N/A"}
             </div>
           </div>
+          <button
+            class="collect-btn"
+            data-movie={JSON.stringify({
+              id: movie.id,
+              title: movie.data.title,
+              poster: movie.data.poster,
+              year: movie.data.year,
+              director: movie.data.director,
+              genre: movie.data.genre,
+              rating: movie.data.rating || 0,
+            })}
+            aria-label="收藏"
+            onclick="event.preventDefault()"
+          >
+            <svg class="collect-heart" viewBox="0 0 24 24" width="16" height="16">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="none" stroke="currentColor" stroke-width="1.8"/>
+            </svg>
+          </button>
         </a>
         <div class="movie-card-info">
           <h3 class="movie-card-title">
@@ -162,6 +238,12 @@ const base = import.meta.env.BASE_URL;
   </div>
 </BaseLayout>
 
+<!-- Add Movie Floating Button -->
+<button class="add-movie-fab" id="addMovieFab" title="添加电影推荐">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  <span>添加推荐</span>
+</button>
+
 <!-- Watch Modal -->
 <div class="watch-modal" id="watchModal">
   <div class="watch-modal-backdrop" id="watchModalBackdrop"></div>
@@ -169,6 +251,116 @@ const base = import.meta.env.BASE_URL;
     <h3 id="watchModalTitle"></h3>
     <div class="watch-modal-links" id="watchModalLinks"></div>
     <button class="watch-modal-close" id="watchModalClose">关闭</button>
+  </div>
+</div>
+
+<!-- Add Movie Modal -->
+<div class="add-modal" id="addModal">
+  <div class="add-modal-backdrop" id="addModalBackdrop"></div>
+  <div class="add-modal-panel">
+    <div class="add-modal-header">
+      <h2>添加电影推荐</h2>
+      <button class="add-modal-close-btn" id="addModalClose">&times;</button>
+    </div>
+    <div class="add-modal-body">
+      <div class="add-form-grid">
+        <div class="add-field add-field-full">
+          <label>中文片名 <span class="add-required">*</span></label>
+          <input type="text" id="addTitle" placeholder="例如：星际穿越" />
+        </div>
+        <div class="add-field">
+          <label>原名</label>
+          <input type="text" id="addOriginalTitle" placeholder="Interstellar" />
+        </div>
+        <div class="add-field add-field-3">
+          <label>年份 <span class="add-required">*</span></label>
+          <input type="number" id="addYear" placeholder="2014" min="1900" max="2030" />
+        </div>
+        <div class="add-field add-field-3">
+          <label>导演 <span class="add-required">*</span></label>
+          <input type="text" id="addDirector" placeholder="克里斯托弗·诺兰" />
+        </div>
+        <div class="add-field add-field-3">
+          <label>国家</label>
+          <input type="text" id="addCountry" placeholder="美国" />
+        </div>
+      </div>
+      <div class="add-field">
+        <label>类型 <span class="add-required">*</span>（勾选，可多选）</label>
+        <div class="add-genre-checks" id="addGenreChecks">
+          {["科幻","剧情","动画","动作","悬疑","犯罪","惊悚","爱情","奇幻","冒险","喜剧","战争","纪录片","恐怖"].map(g => (
+            <label class="add-genre-check"><input type="checkbox" value={g} />{g}</label>
+          ))}
+        </div>
+      </div>
+      <div class="add-form-grid">
+        <div class="add-field add-field-3">
+          <label>评分 (0-10)</label>
+          <input type="number" id="addRating" placeholder="9.0" min="0" max="10" step="0.1" />
+        </div>
+        <div class="add-field add-field-3">
+          <label>热度 (0-100)</label>
+          <input type="number" id="addPopularity" placeholder="90" min="0" max="100" />
+        </div>
+        <div class="add-field add-field-3">
+          <label>海报URL</label>
+          <input type="url" id="addPoster" placeholder="https://image.tmdb.org/t/p/w342/xxx.jpg" />
+        </div>
+      </div>
+      <div class="add-field">
+        <label>影评 / 推荐理由</label>
+        <textarea id="addReview" rows="4" placeholder="写一段推荐理由，会在详情页展示..."></textarea>
+      </div>
+      <!-- Preview -->
+      <div class="add-preview" id="addPreview" style="display:none">
+        <h3>生成的 Markdown</h3>
+        <pre id="addMarkdown"></pre>
+        <div class="add-preview-actions">
+          <button class="add-copy-btn" id="addCopyBtn">复制到剪贴板</button>
+          <span class="add-copy-hint">复制后发给 Claude 帮你创建文件</span>
+        </div>
+      </div>
+    </div>
+    <div class="add-modal-footer">
+      <button class="add-submit-btn" id="addSubmitBtn">生成 Markdown</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manage Recommend Modal -->
+<div class="add-modal" id="manageModal">
+  <div class="add-modal-backdrop" id="manageModalBackdrop"></div>
+  <div class="add-modal-panel">
+    <div class="add-modal-header">
+      <h2>管理本周推荐</h2>
+      <button class="add-modal-close-btn" id="manageModalClose">&times;</button>
+    </div>
+    <div class="add-modal-body">
+      <p class="manage-hint">勾选要移除的电影，或添加新电影。完成后点"生成指令"复制给 Claude 执行。</p>
+      <div class="manage-current-list" id="manageCurrentList"></div>
+      <hr class="manage-divider" />
+      <div class="add-field add-field-full">
+        <label>快速添加电影</label>
+        <div class="manage-quick-add">
+          <input type="text" id="manageQuickTitle" placeholder="电影名称" />
+          <input type="text" id="manageQuickDirector" placeholder="导演" style="max-width:140px" />
+          <input type="number" id="manageQuickYear" placeholder="年份" style="max-width:80px" min="1900" max="2030" />
+          <button class="manage-add-btn" id="manageQuickAddBtn">+ 加入</button>
+        </div>
+      </div>
+      <div class="manage-pending-list" id="managePendingList"></div>
+      <div class="add-preview" id="managePreview" style="display:none">
+        <h3>生成的指令</h3>
+        <pre id="manageMarkdown"></pre>
+        <div class="add-preview-actions">
+          <button class="add-copy-btn" id="manageCopyBtn">复制到剪贴板</button>
+          <span class="add-copy-hint">复制后发给 Claude 执行更新</span>
+        </div>
+      </div>
+    </div>
+    <div class="add-modal-footer">
+      <button class="add-submit-btn" id="manageGenerateBtn">生成指令</button>
+    </div>
   </div>
 </div>
 
@@ -292,6 +484,346 @@ const base = import.meta.env.BASE_URL;
   );
 
   document.querySelectorAll(".movie-card").forEach((card) => observer.observe(card));
+
+  // --- Add Movie Modal ---
+  const addFab = document.getElementById("addMovieFab")!;
+  const addModal = document.getElementById("addModal")!;
+  const addBackdrop = document.getElementById("addModalBackdrop")!;
+  const addClose = document.getElementById("addModalClose")!;
+  const addSubmit = document.getElementById("addSubmitBtn")!;
+  const addPreview = document.getElementById("addPreview")!;
+  const addMd = document.getElementById("addMarkdown")!;
+  const addCopy = document.getElementById("addCopyBtn")!;
+
+  function openAddModal() {
+    addModal.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+  function closeAddModal() {
+    addModal.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+  addFab.addEventListener("click", openAddModal);
+  addBackdrop.addEventListener("click", closeAddModal);
+  addClose.addEventListener("click", closeAddModal);
+
+  addSubmit.addEventListener("click", () => {
+    const title = (document.getElementById("addTitle") as HTMLInputElement).value.trim();
+    const originalTitle = (document.getElementById("addOriginalTitle") as HTMLInputElement).value.trim();
+    const year = (document.getElementById("addYear") as HTMLInputElement).value.trim();
+    const director = (document.getElementById("addDirector") as HTMLInputElement).value.trim();
+    const country = (document.getElementById("addCountry") as HTMLInputElement).value.trim();
+    const rating = (document.getElementById("addRating") as HTMLInputElement).value.trim();
+    const popularity = (document.getElementById("addPopularity") as HTMLInputElement).value.trim();
+    const poster = (document.getElementById("addPoster") as HTMLInputElement).value.trim();
+    const review = (document.getElementById("addReview") as HTMLTextAreaElement).value.trim();
+    const genres = Array.from(document.querySelectorAll<HTMLInputElement>("#addGenreChecks input:checked")).map(cb => cb.value);
+
+    if (!title || !year || !director || genres.length === 0) {
+      alert("请至少填写片名、年份、导演和类型");
+      return;
+    }
+
+    const slug = title.toLowerCase().replace(/\s+/g, "-");
+    const today = new Date().toISOString().split("T")[0];
+    const posterUrl = poster || "https://image.tmdb.org/t/p/w342/placeholder.jpg";
+
+    const md = `---
+title: "${title}"
+originalTitle: "${originalTitle}"
+year: ${year}
+director: "${director}"
+country: "${country}"
+genre: [${genres.map(g => `"${g}"`).join(", ")}]
+rating: ${rating || "0"}
+popularity: ${parseInt(popularity) || 80}
+poster: ${posterUrl}
+backdrop: ${posterUrl.replace("/w342/", "/w1280/")}
+watchLinks:
+  - mini4k
+  - ddys
+date: ${today}
+---
+
+${review || "（待补充推荐理由）"}
+`;
+
+    addMd.textContent = md;
+    addPreview.style.display = "block";
+    addPreview.scrollIntoView({ behavior: "smooth" });
+  });
+
+  addCopy.addEventListener("click", async () => {
+    const md = addMd.textContent || "";
+    await navigator.clipboard.writeText(md);
+    addCopy.textContent = "已复制!";
+    addCopy.classList.add("copied");
+    setTimeout(() => {
+      addCopy.textContent = "复制到剪贴板";
+      addCopy.classList.remove("copied");
+    }, 2000);
+  });
+
+  // --- Collection Logic ---
+  const COLLECTION_KEY = "movie-collections";
+
+  function getCollections(): any[] {
+    try { return JSON.parse(localStorage.getItem(COLLECTION_KEY) || "[]"); }
+    catch { return []; }
+  }
+
+  function saveCollections(col: any[]) {
+    localStorage.setItem(COLLECTION_KEY, JSON.stringify(col));
+  }
+
+  function updateCollectButtons() {
+    const collections = getCollections();
+    const ids = new Set(collections.map((c: any) => c.id));
+
+    document.querySelectorAll<HTMLElement>(".collect-btn").forEach((btn) => {
+      const movieData = JSON.parse(btn.dataset.movie || "{}");
+      const isCollected = ids.has(movieData.id);
+      btn.classList.toggle("collected", isCollected);
+    });
+
+    // Update sidebar count
+    const countEl = document.getElementById("collectionCount");
+    if (countEl) countEl.textContent = String(collections.length);
+  }
+
+  // Delegate collect button clicks
+  document.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>(".collect-btn");
+    if (!btn) return;
+    e.preventDefault();
+    const movieData = JSON.parse(btn.dataset.movie || "{}");
+    const collections = getCollections();
+    const idx = collections.findIndex((c: any) => c.id === movieData.id);
+    if (idx >= 0) {
+      collections.splice(idx, 1);
+    } else {
+      collections.push({ ...movieData, collectedAt: new Date().toISOString() });
+    }
+    saveCollections(collections);
+    updateCollectButtons();
+    applyCollectionView();
+  });
+
+  // Collection view mode
+  const urlParams = new URLSearchParams(window.location.search);
+  let collectionMode = urlParams.get("collection") === "1";
+
+  function renderCollectionGrid(collections: any[]) {
+    const grid = document.getElementById("collectionGrid")!;
+    const base = import.meta.env.BASE_URL || "/";
+
+    if (collections.length === 0) {
+      grid.innerHTML = '<div class=\"movies-empty\"><p>还没有收藏电影，去推荐里发现好片吧</p></div>';
+      return;
+    }
+
+    // Sync poster URLs from current page data (fixes stale localStorage posters)
+    const posterMap: Record<string, string> = {};
+    document.querySelectorAll(".collect-btn").forEach((btn) => {
+      try {
+        const d = JSON.parse((btn as HTMLElement).dataset.movie || "{}");
+        if (d.id && d.poster) posterMap[d.id] = d.poster;
+      } catch {}
+    });
+
+    if (Object.keys(posterMap).length > 0) {
+      let updated = false;
+      collections = collections.map((c: any) => {
+        if (posterMap[c.id] && posterMap[c.id] !== c.poster) {
+          updated = true;
+          return { ...c, poster: posterMap[c.id] };
+        }
+        return c;
+      });
+      if (updated) saveCollections(collections);
+    }
+
+    grid.innerHTML = collections.map((c: any) => `
+      <div class="movie-card visible" style="--card-delay:0s">
+        <a href="${base}movies/${c.id}" class="movie-card-poster">
+          <img src="${c.poster}" alt="${c.title}" loading="eager" onerror="this.style.display='none'" />
+          <div class="movie-card-overlay">
+            <div class="movie-card-rating">${c.rating > 0 ? c.rating.toFixed(1) : 'N/A'}</div>
+          </div>
+          <button class="collect-btn collected" data-movie='${JSON.stringify(c)}' onclick="event.preventDefault()" aria-label="取消收藏">
+            <svg class="collect-heart" viewBox="0 0 24 24" width="16" height="16">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#ef4444" stroke="#ef4444" stroke-width="1.8"/>
+            </svg>
+          </button>
+        </a>
+        <div class="movie-card-info">
+          <h3 class="movie-card-title">
+            <a href="${base}movies/${c.id}">${c.title}</a>
+          </h3>
+          <div class="movie-card-meta">
+            <span>${c.year}</span>
+            <span class="meta-dot"></span>
+            <span>${c.director}</span>
+          </div>
+          <div class="movie-card-genres">
+            ${(c.genre || []).map((g: string) => `<span class="movie-genre-tag">${g}</span>`).join("")}
+          </div>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function applyCollectionView() {
+    const banner = document.getElementById("collectionBanner")!;
+    const filters = document.querySelector(".movies-filters") as HTMLElement;
+    const fab = document.getElementById("addMovieFab");
+    const mainGrid = document.getElementById("movieGrid")!;
+    const recommendSection = document.getElementById("recommendSection");
+    const collectionGrid = document.getElementById("collectionGrid")!;
+    const collections = getCollections();
+
+    if (collectionMode) {
+      banner.style.display = "";
+      if (filters) filters.style.display = "none";
+      if (fab) fab.style.display = "none";
+      if (recommendSection) recommendSection.style.display = "none";
+      mainGrid.style.display = "none";
+      collectionGrid.style.display = "";
+
+      renderCollectionGrid(collections);
+
+      const bannerCount = document.getElementById("collectionBannerCount");
+      if (bannerCount) bannerCount.textContent = String(collections.length);
+    } else {
+      banner.style.display = "none";
+      if (filters) filters.style.display = "";
+      if (fab) fab.style.display = "";
+      if (recommendSection) recommendSection.style.display = "";
+      mainGrid.style.display = "";
+      collectionGrid.style.display = "none";
+      collectionGrid.innerHTML = "";
+    }
+  }
+
+  document.getElementById("collectionModeExit")?.addEventListener("click", () => {
+    collectionMode = false;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("collection");
+    window.history.replaceState({}, "", url.toString());
+    applyCollectionView();
+    applyFilters();
+    updateCollectButtons();
+  });
+
+  // Init
+  updateCollectButtons();
+  if (collectionMode) applyCollectionView();
+
+  // --- Manage Recommend Modal ---
+  const manageBtn = document.getElementById("manageRecommendBtn")!;
+  const manageModal = document.getElementById("manageModal")!;
+  const manageBackdrop = document.getElementById("manageModalBackdrop")!;
+  const manageClose = document.getElementById("manageModalClose")!;
+  const manageGenerate = document.getElementById("manageGenerateBtn")!;
+  const manageCurrentList = document.getElementById("manageCurrentList")!;
+  const managePendingList = document.getElementById("managePendingList")!;
+  const managePreview = document.getElementById("managePreview")!;
+  const manageMd = document.getElementById("manageMarkdown")!;
+  const manageCopy = document.getElementById("manageCopyBtn")!;
+  const manageQuickAdd = document.getElementById("manageQuickAddBtn")!;
+
+  let pendingAdds: string[] = [];
+
+  function openManageModal() {
+    // Populate current recommendations
+    const cards = document.querySelectorAll(".recommend-card");
+    let html = "";
+    cards.forEach((card) => {
+      const name = card.querySelector(".recommend-name")?.textContent || "";
+      const year = card.querySelector(".recommend-year")?.textContent || "";
+      const movieId = (card as HTMLElement).dataset.movieId || "";
+      html += '<label class="manage-item"><input type="checkbox" value="' + movieId + '" data-filename="' + movieId.split("/").pop() + '" data-title="' + name + '" /> <span>' + name + '</span> <span class="manage-item-meta">' + year + '</span></label>';
+    });
+    manageCurrentList.innerHTML = html;
+    pendingAdds = [];
+    managePendingList.innerHTML = "";
+    managePreview.style.display = "none";
+    manageModal.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeManageModal() {
+    manageModal.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
+  manageBtn.addEventListener("click", openManageModal);
+  manageBackdrop.addEventListener("click", closeManageModal);
+  manageClose.addEventListener("click", closeManageModal);
+
+  manageQuickAdd.addEventListener("click", () => {
+    const title = (document.getElementById("manageQuickTitle") as HTMLInputElement).value.trim();
+    const director = (document.getElementById("manageQuickDirector") as HTMLInputElement).value.trim();
+    const year = (document.getElementById("manageQuickYear") as HTMLInputElement).value.trim();
+    if (!title) return;
+    const slug = title.toLowerCase().replace(/[^a-z0-9一-鿿]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    const entry = `${title} (${director}, ${year})`;
+    pendingAdds.push(entry);
+    (document.getElementById("manageQuickTitle") as HTMLInputElement).value = "";
+    (document.getElementById("manageQuickDirector") as HTMLInputElement).value = "";
+    (document.getElementById("manageQuickYear") as HTMLInputElement).value = "";
+    renderPending();
+  });
+
+  function renderPending() {
+    managePendingList.innerHTML = pendingAdds.map((e, i) =>
+      '<div class="manage-pending-item"><span>+ ' + e + '</span><button class="manage-remove-pending" data-idx="' + i + '">×</button></div>'
+    ).join("");
+    document.querySelectorAll(".manage-remove-pending").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const idx = parseInt((e.target as HTMLElement).dataset.idx || "");
+        pendingAdds.splice(idx, 1);
+        renderPending();
+      });
+    });
+  }
+
+  manageGenerate.addEventListener("click", () => {
+    const checked = document.querySelectorAll<HTMLInputElement>("#manageCurrentList input:checked");
+    const toRemove: string[] = [];
+    checked.forEach((cb) => {
+      toRemove.push(`删除推荐: ${cb.dataset.title} (文件: ${cb.dataset.filename})`);
+    });
+
+    let cmd = "请帮我更新电影推荐：\n\n";
+    if (toRemove.length > 0) {
+      cmd += "## 移除以下推荐\n";
+      toRemove.forEach((r) => (cmd += `- ${r}\n`));
+      cmd += "\n";
+    }
+    if (pendingAdds.length > 0) {
+      cmd += "## 新增以下推荐\n";
+      pendingAdds.forEach((a) => (cmd += `- ${a}\n`));
+      cmd += "\n";
+    }
+    if (toRemove.length === 0 && pendingAdds.length === 0) {
+      cmd += "（没有变更）\n";
+    }
+
+    manageMd.textContent = cmd;
+    managePreview.style.display = "block";
+    managePreview.scrollIntoView({ behavior: "smooth" });
+  });
+
+  manageCopy.addEventListener("click", async () => {
+    await navigator.clipboard.writeText(manageMd.textContent || "");
+    manageCopy.textContent = "已复制!";
+    manageCopy.classList.add("copied");
+    setTimeout(() => {
+      manageCopy.textContent = "复制到剪贴板";
+      manageCopy.classList.remove("copied");
+    }, 2000);
+  });
 </script>
 
 <style is:global>
@@ -428,6 +960,187 @@ const base = import.meta.env.BASE_URL;
   .filter-summary strong {
     color: var(--accent);
     font-weight: 700;
+  }
+
+  /* ===== Recommendation Strip ===== */
+  .recommend-section {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 2rem;
+    padding: 1.25rem;
+    border-radius: 14px;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, transparent), color-mix(in srgb, #f59e0b 5%, transparent));
+    border: 1px solid color-mix(in srgb, var(--accent) 15%, transparent);
+  }
+
+  .recommend-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .recommend-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .recommend-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--accent), #a78bfa);
+    color: #fff;
+  }
+
+  .recommend-strip {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.25rem;
+  }
+
+  .recommend-strip::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .recommend-strip::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+  }
+
+  .recommend-card {
+    flex: 0 0 170px;
+    scroll-snap-align: start;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+  }
+
+  .recommend-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  .recommend-poster {
+    display: block;
+    aspect-ratio: 2/3;
+    overflow: hidden;
+  }
+
+  .recommend-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .recommend-card:hover .recommend-poster img {
+    transform: scale(1.05);
+  }
+
+  .recommend-info {
+    padding: 0.5rem 0.6rem;
+  }
+
+  .recommend-name {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .recommend-name:hover {
+    color: var(--accent);
+  }
+
+  .recommend-year {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+  }
+
+  /* Collect Button */
+  .collect-btn {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.4rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(4px);
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 2;
+  }
+
+  .collect-btn:hover {
+    transform: scale(1.2);
+    background: rgba(0,0,0,0.6);
+  }
+
+  .collect-btn.collected {
+    color: #ef4444;
+    background: rgba(239,68,68,0.2);
+    animation: heartPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .collect-btn.collected .collect-heart path {
+    fill: #ef4444;
+    stroke: #ef4444;
+  }
+
+  @keyframes heartPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.35); }
+    100% { transform: scale(1); }
+  }
+
+  /* Collection Mode Banner */
+  .collection-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.25rem;
+    border-radius: 10px;
+    background: color-mix(in srgb, #ef4444 8%, var(--bg-card));
+    border: 1px solid color-mix(in srgb, #ef4444 20%, transparent);
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+
+  .collection-mode-exit {
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .collection-mode-exit:hover {
+    border-color: var(--accent);
+    color: var(--accent);
   }
 
   /* ===== Movie Grid ===== */
@@ -750,6 +1463,414 @@ const base = import.meta.env.BASE_URL;
     .movie-grid {
       grid-template-columns: repeat(2, 1fr);
       gap: 0.75rem;
+    }
+  }
+
+  /* ===== Add Movie FAB ===== */
+  .add-movie-fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.45);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .add-movie-fab:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 30px rgba(245, 158, 11, 0.6);
+  }
+
+  /* ===== Add Movie Modal ===== */
+  .add-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 101;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  .add-modal.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .add-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+  }
+
+  .add-modal-panel {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 620px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .add-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg-card);
+    border-radius: 16px 16px 0 0;
+    z-index: 1;
+  }
+
+  .add-modal-header h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
+  .add-modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+
+  .add-modal-close-btn:hover {
+    color: var(--text);
+  }
+
+  .add-modal-body {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .add-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .add-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .add-field {
+    margin-bottom: 0.75rem;
+  }
+
+  .add-field label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.3rem;
+  }
+
+  .add-required {
+    color: #ef4444;
+  }
+
+  .add-field input,
+  .add-field textarea {
+    width: 100%;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.875rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .add-field input:focus,
+  .add-field textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .add-field-full {
+    grid-column: 1 / -1;
+  }
+
+  .add-field-3 {
+    /* for 3-col layout within 2-col grid */
+  }
+
+  .add-genre-checks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .add-genre-check {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .add-genre-check:has(input:checked) {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .add-genre-check input {
+    display: none;
+  }
+
+  /* Preview */
+  .add-preview {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 10px;
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+  }
+
+  .add-preview h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+  }
+
+  .add-preview pre {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 0.75rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .add-preview-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .add-submit-btn,
+  .add-copy-btn {
+    padding: 0.6rem 1.5rem;
+    border-radius: 10px;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .add-submit-btn {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .add-submit-btn:hover {
+    background: #f59e0b;
+  }
+
+  .add-copy-btn {
+    background: #10b981;
+    color: #fff;
+  }
+
+  .add-copy-btn:hover {
+    background: #059669;
+  }
+
+  .add-copy-btn.copied {
+    background: #6b7280;
+  }
+
+  .add-copy-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  /* ===== Manage Recommend ===== */
+  .manage-recommend-btn {
+    margin-left: auto;
+    padding: 0.25rem 0.65rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .manage-recommend-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .manage-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .manage-current-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .manage-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    background: var(--bg);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .manage-item:hover {
+    background: var(--hover);
+  }
+
+  .manage-item:has(input:checked) {
+    background: color-mix(in srgb, #ef4444 10%, var(--bg));
+    text-decoration: line-through;
+    color: #ef4444;
+  }
+
+  .manage-item-meta {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-left: auto;
+  }
+
+  .manage-divider {
+    border: none;
+    border-top: 1px dashed var(--border);
+    margin: 1rem 0;
+  }
+
+  .manage-quick-add {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .manage-quick-add input {
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .manage-add-btn {
+    padding: 0.5rem 0.9rem;
+    border-radius: 8px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: opacity 0.15s;
+  }
+
+  .manage-add-btn:hover {
+    opacity: 0.85;
+  }
+
+  .manage-pending-list {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .manage-pending-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.35rem 0.6rem;
+    border-radius: 6px;
+    background: color-mix(in srgb, #10b981 10%, var(--bg));
+    font-size: 0.8rem;
+    color: #10b981;
+  }
+
+  .manage-remove-pending {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0 0.25rem;
+    line-height: 1;
+  }
+
+  @media (max-width: 768px) {
+    .add-movie-fab {
+      bottom: 1rem;
+      right: 1rem;
+      padding: 0.6rem 1rem;
+      font-size: 0.8rem;
+    }
+    .add-movie-fab span {
+      display: none;
+    }
+    .add-modal-panel {
+      max-width: 100vw;
+      max-height: 100vh;
+      border-radius: 0;
+    }
+    .add-form-grid {
+      grid-template-columns: 1fr;
     }
   }
 </style>

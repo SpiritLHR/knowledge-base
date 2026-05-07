@@ -79,6 +79,11 @@ const currentPath = Astro.url?.pathname || "";
         </a>
       </li>
       <li>
+        <a href={`${base}/movies?collection=1`} id="collectionLink">
+          我的收藏 <span class="collection-count" id="collectionCount">0</span>
+        </a>
+      </li>
+      <li>
         <a href={`${base}/tags`} class:list={[currentPath === `${base}/tags` ? "active" : ""]}>
           标签总览
         </a>

@@ -1,8 +1,8 @@
 ---
 import { getCollection } from "astro:content";
-import { marked } from "marked";
 import ArticleLayout from "../../layouts/ArticleLayout.astro";
 import { processWikilinks, buildSlugMap } from "../../utils/wikilinks";
+import { getHighlightedMarked } from "../../utils/marked-setup";
 
 export async function getStaticPaths() {
   const articles = await getCollection("articles");
@@ -14,17 +14,54 @@ export async function getStaticPaths() {
 
 const { slug } = Astro.props;
 const articles = await getCollection("articles");
-const article = articles.find((a) => (a.id) === slug);
+const article = articles.find((a) => a.id === slug);
 
 if (!article) {
   return new Response("Not found", { status: 404 });
 }
 
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[`*_~\[\]]/g, "")
+    .replace(/[^\w一-鿿]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+interface Heading {
+  depth: number;
+  text: string;
+  slug: string;
+}
+
+const headings: Heading[] = [];
+const headingRegex = /^(#{2,3})\s+(.+)$/gm;
+let match;
+while ((match = headingRegex.exec(article.body || "")) !== null) {
+  const text = match[2].replace(/[`*_~\[\]]/g, "");
+  headings.push({
+    depth: match[1].length,
+    text,
+    slug: slugify(text),
+  });
+}
+
+const marked = await getHighlightedMarked();
+
 const slugMap = buildSlugMap(articles.map((a) => a.id));
 const processedBody = processWikilinks(article.body || "", slugMap);
-const html = await marked.parse(processedBody);
+let html = await marked.parse(processedBody);
+
+let headingIndex = 0;
+html = html.replace(/<h([23])>(.*?)<\/h\1>/g, (match, level, content) => {
+  const h = headings[headingIndex++];
+  if (h) {
+    return `<h${level} id="${h.slug}">${content}</h${level}>`;
+  }
+  return match;
+});
 ---
 
-<ArticleLayout article={article}>
-  <div class="article-content" set:html={html} />
+<ArticleLayout article={article} headings={headings}>
+  <div set:html={html} />
 </ArticleLayout>
