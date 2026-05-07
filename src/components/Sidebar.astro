@@ -33,6 +33,14 @@ const searchItems = articles.map((a) => ({
   tags: a.data.tags || [],
 }));
 
+const nameMap: Record<string, string> = {
+  programming: "编程语言",
+  tools: "工具配置",
+  ops: "系统运维",
+  reading: "读书笔记",
+  thoughts: "日常随想",
+};
+
 const sortedTags = Array.from(tagCount.entries()).sort((a, b) => b[1] - a[1]);
 const maxTagCount = Math.max(...sortedTags.map(([, c]) => c), 1);
 const base = import.meta.env.BASE_URL;
@@ -81,7 +89,8 @@ const currentPath = Astro.url?.pathname || "";
           <div class="nav-dir">{cat}</div>
           <ul class="nav-sub">
             {Array.from(categories.get(cat)!.subdirs).sort().map((sub) => {
-              const label = sub.split("/").pop() || sub;
+              const rawLabel = sub.split("/").pop() || sub;
+              const label = nameMap[rawLabel] || rawLabel;
               return (
                 <li>
                   <a href={`${base}/category/${sub}`}>
