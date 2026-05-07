@@ -87,7 +87,7 @@ const currentPath = Astro.url?.pathname || "";
         <button
           class="nav-group-toggle"
           id="articlesGroupToggle"
-          aria-expanded="true"
+          aria-expanded="false"
         >
           <span class="nav-group-label">全部文章</span>
           <span class="nav-group-arrow"></span>
@@ -122,11 +122,9 @@ const currentPath = Astro.url?.pathname || "";
 
   <script>
     const articlesToggle = document.getElementById("articlesGroupToggle");
-    const articlesList = document.getElementById("articlesGroupList");
     articlesToggle?.addEventListener("click", () => {
       const expanded = articlesToggle.getAttribute("aria-expanded") === "true";
       articlesToggle.setAttribute("aria-expanded", String(!expanded));
-      articlesList?.classList.toggle("collapsed", expanded);
     });
   </script>
 

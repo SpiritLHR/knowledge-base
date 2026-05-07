@@ -312,11 +312,11 @@ img {
 .nav-group-list {
   overflow: hidden;
   transition: max-height 0.3s ease;
-  max-height: 600px;
+  max-height: 0;
 }
 
-.nav-group-list.collapsed {
-  max-height: 0;
+.nav-group-toggle[aria-expanded="true"] + .nav-group-list {
+  max-height: 500px;
 }
 
 .sidebar-nav .nav-sub {
