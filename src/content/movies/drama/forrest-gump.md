@@ -7,8 +7,8 @@ country: 美国
 genre: [剧情, 爱情]
 rating: 9.5
 popularity: 97
-poster: https://image.tmdb.org/t/p/w342/yiWWUa1mB55dfd0QpGHsFsge67I.jpg
-backdrop: https://image.tmdb.org/t/p/w1280/yiWWUa1mB55dfd0QpGHsFsge67I.jpg
+poster: https://image.tmdb.org/t/p/w342/xGEKFYixC7L4Mjhkq4dTwhmBlRI.jpg
+backdrop: https://image.tmdb.org/t/p/w1280/xGEKFYixC7L4Mjhkq4dTwhmBlRI.jpg
 watchLinks:
   - mini4k
   - ddys
